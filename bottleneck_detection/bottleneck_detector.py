@@ -1,36 +1,36 @@
+import json
+from datetime import datetime, timedelta
+
 class BottleneckDetector:
-       def __init__(self, commit_data, deployment_data):
-           self.commit_data = commit_data
-           self.deployment_data = deployment_data
+    def __init__(self, commit_data, deployment_data):
+        self.commit_data = commit_data
+        self.deployment_data = deployment_data
 
-       def detect_high_lead_time(self, lead_times):
-           high_lead_time_commits = [commit for commit in lead_times if commit['lead_time'] > 24]  # Example threshold
-           return high_lead_time_commits
+    def detect_high_lead_time(self, lead_times, threshold_hours=24):
+        high_lead = [entry for entry in lead_times if entry["lead_time"] > threshold_hours]
+        return high_lead
 
-       def detect_change_failure_rate(self, failure_data):
-           total_deployments = len(failure_data)
-           failed_deployments = sum(1 for result in failure_data if result['status'] == 'failed')
-           failure_rate = (failed_deployments / total_deployments) * 100 if total_deployments > 0 else 0
-           return failure_rate
+    def detect_change_failure_rate(self):
+        if not self.deployment_data:
+            return 0.0
+        failed = [d for d in self.deployment_data if d["status"] == "failed"]
+        return (len(failed) / len(self.deployment_data)) * 100
 
-       def analyze_commit_vs_deployment(self):
-           commit_counts = [count for _, count in self.commit_data]
-           deployment_counts = [count for _, count in self.deployment_data]
-           discrepancies = [(commit, deploy) for commit, deploy in zip(commit_counts, deployment_counts) if commit > deploy]
-           return discrepancies
+    def analyze_commit_vs_deployment(self):
+        commit_counts = sum(count for _, count in self.commit_data)
+        deploy_counts = len(self.deployment_data)
+        return (commit_counts, deploy_counts)
 
 if __name__ == "__main__":
-       commit_data = [('2023-10-01', 5), ('2023-10-02', 3), ('2023-10-03', 2)]
-       deployment_data = [('2023-10-01', 2), ('2023-10-02', 1), ('2023-10-03', 1)]
-       lead_times = [{'commit': 'abc123', 'lead_time': 30}, {'commit': 'def456', 'lead_time': 10}]
-       failure_data = [{'deployment': 'deploy1', 'status': 'success'}, {'deployment': 'deploy2', 'status': 'failed'}]
+    # Load from data files
+    with open("data_collection/deployment_metrics.json") as f:
+        deployments = json.load(f)
 
-       detector = BottleneckDetector(commit_data, deployment_data)
-       high_lead_time_commits = detector.detect_high_lead_time(lead_times)
-       failure_rate = detector.detect_change_failure_rate(failure_data)
-       discrepancies = detector.analyze_commit_vs_deployment()
+    commit_data = [("2025-06-20", 5), ("2025-06-22", 3), ("2025-06-24", 2)]  # Simulated
+    lead_times = [{"commit": "abc123", "lead_time": 30}, {"commit": "def456", "lead_time": 10}]
 
-       print("High Lead Time Commits:", high_lead_time_commits)
-       print("Change Failure Rate (%):", failure_rate)
-       print("Commit vs Deployment Discrepancies:", discrepancies)
-   
+    detector = BottleneckDetector(commit_data, deployments)
+
+    print("⚠️ High Lead Time Commits:", detector.detect_high_lead_time(lead_times))
+    print("❌ Change Failure Rate (%):", detector.detect_change_failure_rate())
+    print("📊 Commit vs Deployment:", detector.analyze_commit_vs_deployment())

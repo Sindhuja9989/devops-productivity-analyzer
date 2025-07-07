@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DevOps Team Productivity and Bottleneck Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            margin: 0;
+            padding: 0 20px;
+        }
+        h1, h2, h3 {
+            color: #1a237e;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .charts {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        canvas {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>DevOps Team Productivity and Bottleneck Analyzer</h1>
+
+    <div class="section">
+        <h2>Problem Statement</h2>
+        <p>Build a system that analyzes development and deployment metrics to identify team productivity bottlenecks and suggest improvements.</p>
+    </div>
+
+    <div class="section">
+        <h2>Skills Demonstrated</h2>
+        <ul>
+            <li><strong>AI/ML:</strong> Workflow analysis, bottleneck detection, productivity trend analysis</li>
+            <li><strong>Critical Thinking:</strong> Understand workflows, identify metrics, consider team dynamics</li>
+            <li><strong>Problem Solving:</strong> Handle tool diversity, team scale, and subjective measures</li>
+            <li><strong>Modular Structure:</strong> Data collection, analysis, detection, and recommendations</li>
+            <li><strong>Clear Architecture:</strong> Metrics &rarr; Analysis &rarr; Bottlenecks &rarr; Improvements</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Charts</h2>
+        <div class="charts">
+            <div>
+                <h3>Review Time per PR (hrs)</h3>
+                <canvas id="reviewChart" width="400" height="300"></canvas>
+            </div>
+            <div>
+                <h3>Deployment Status</h3>
+                <canvas id="deployChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Recommendations</h2>
+        <ul>
+            {% if recommendations %}
+                {% for r in recommendations %}
+                    <li>{{ r }}</li>
+                {% endfor %}
+            {% else %}
+                <li>No recommendations available. Run the analysis modules first.</li>
+            {% endif %}
+        </ul>
+    </div>
+
+   <script>
+    const reviewData = {{ pr_metrics.get("review_times", []) | tojson | safe }};
+    const deployData = {{ deployment_data | tojson | safe }};
+
+        const reviewHours = reviewData.map((pr, idx) => pr.hours);
+        const reviewLabels = reviewData.map((_, idx) => `PR ${idx + 1}`);
+
+        const statusCount = { success: 0, failed: 0 };
+        deployData.forEach(dep => {
+            if (dep.status === 'success') statusCount.success++;
+            if (dep.status === 'failed') statusCount.failed++;
+        });
+
+        new Chart(document.getElementById('reviewChart'), {
+            type: 'bar',
+            data: {
+                labels: reviewLabels,
+                datasets: [{
+                    label: 'Review Time (hrs)',
+                    data: reviewHours,
+                    backgroundColor: '#42a5f5'
+                }]
+            },
+            options: { responsive: true }
+        });
+
+        new Chart(document.getElementById('deployChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Success', 'Failed'],
+                datasets: [{
+                    label: 'Deployments',
+                    data: [statusCount.success, statusCount.failed],
+                    backgroundColor: ['#66bb6a', '#ef5350']
+                }]
+            },
+            options: { responsive: true }
+        });
+    </script>
+</body>
+</html>
